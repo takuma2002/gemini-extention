@@ -1,0 +1,30 @@
+{
+  "manifest_version": 3,
+  "name": "Gemini DM 返信アシスタント",
+  "version": "1.0",
+  "description": "DMの会話履歴から文脈を読み取り、Gemini APIを用いて返信案を生成します。",
+  "permissions": [
+    "storage",
+    "activeTab"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "<all_urls>"
+      ],
+      "js": [
+        "content_script.js"
+      ]
+    }
+  ],
+  "host_permissions": [
+    "https://generativelanguage.googleapis.com/"
+  ],
+  "options_ui": {
+    "page": "options.html",
+    "open_in_tab": true
+  }
+}
