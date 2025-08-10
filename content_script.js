@@ -1,156 +1,81 @@
-// Gemini DM Assistant - content_script.js
+// Gemini DM Assistant - content_script.js (Refactored)
+
+console.log("Gemini DM Assistant: Content script loaded and listening for popup commands.");
 
 /**
- * Finds a suitable text input area on the page.
- * This is a heuristic and may need to be improved.
- * @returns {HTMLElement|null} The found text area or input element.
+ * Heuristic to find the conversation container relative to a given element.
+ * @param {HTMLElement} startElement - The element to start searching from (e.g., the active input).
+ * @returns {string|null} The innerHTML of the container, or null if not found.
  */
-function findTextInputArea() {
-    // Look for a <textarea> first.
-    const textarea = document.querySelector('textarea');
-    if (textarea) return textarea;
+function findConversationHtml(startElement) {
+    if (!startElement) {
+        console.error("No start element provided to find conversation.");
+        return null;
+    }
 
-    // Fallback to looking for a div with role="textbox".
-    const textbox = document.querySelector('div[role="textbox"]');
-    if (textbox) return textbox;
+    let potentialContainer = startElement;
+    for (let i = 0; i < 15; i++) { // Search up to 15 levels up the DOM tree
+        if (!potentialContainer) break;
 
+        const style = window.getComputedStyle(potentialContainer);
+        // Look for a scrollable element with a reasonable height.
+        if ((style.overflowY === 'auto' || style.overflowY === 'scroll') && potentialContainer.clientHeight > 200) {
+            console.log("Found conversation container:", potentialContainer);
+            return potentialContainer.innerHTML;
+        }
+        potentialContainer = potentialContainer.parentElement;
+    }
+    console.error("Could not find conversation container via heuristic.");
     return null;
 }
 
 /**
- * When the generate button is clicked, this function finds the conversation
- * container, extracts its HTML, and sends it to the background script.
+ * Inserts text into the specified input element.
+ * @param {HTMLElement} inputElement - The <textarea> or contenteditable <div>.
+ * @param {string} text - The text to insert.
  */
-function onGenerateButtonClick() {
-    console.log('✨ Generate button clicked!');
-    const button = document.getElementById('gemini-generate-button');
-    const inputArea = findTextInputArea();
-    if (!inputArea) {
-        alert("テキスト入力エリアが見つかりませんでした。");
+function insertTextIntoInput(inputElement, text) {
+    if (!inputElement) {
+        console.error("No input element found to insert text.");
         return;
     }
 
-    // Heuristic to find the conversation container
-    let potentialContainer = inputArea;
-    let containerFound = false;
-
-    for (let i = 0; i < 15; i++) {
-        if (!potentialContainer) break;
-
-        const style = window.getComputedStyle(potentialContainer);
-        if ((style.overflowY === 'auto' || style.overflowY === 'scroll') && potentialContainer.clientHeight > 200) {
-            const conversationHtml = potentialContainer.innerHTML;
-            console.log("Found potential conversation container. Sending HTML to background script.");
-
-            // --- UI UPDATE: Show loading state ---
-            const originalButtonText = button.textContent;
-            button.textContent = '生成中...';
-            button.disabled = true;
-
-            // Send the HTML to the background script for processing
-            chrome.runtime.sendMessage({
-                type: 'generateReply',
-                html: conversationHtml
-            }, (response) => {
-                // --- UI UPDATE: Restore button state ---
-                button.textContent = originalButtonText;
-                button.disabled = false;
-
-                // --- RESPONSE HANDLING ---
-                if (chrome.runtime.lastError) {
-                    console.error('Error receiving response:', chrome.runtime.lastError.message);
-                    alert(`拡張機能との通信にエラーが発生しました: ${chrome.runtime.lastError.message}`);
-                    return;
-                }
-
-                if (response.error) {
-                    console.error('Error from background script:', response.error.message);
-                    alert(`返信の生成に失敗しました: ${response.error.message}`);
-                    return;
-                }
-
-                if (response.reply) {
-                    console.log('Received reply:', response.reply);
-                    const currentInputArea = findTextInputArea();
-                    if (currentInputArea) {
-                        // Set the value for <textarea> or innerText for contenteditable <div>
-                        if (currentInputArea.tagName.toLowerCase() === 'textarea') {
-                            currentInputArea.value = response.reply;
-                        } else {
-                            currentInputArea.innerText = response.reply;
-                        }
-                        // Dispatch an 'input' event to let the host page's framework (e.g., React) know about the change.
-                        currentInputArea.dispatchEvent(new Event('input', { bubbles: true, cancelable: true }));
-                        console.log('Reply inserted into text area.');
-                    } else {
-                        alert("生成された返信:\n\n" + response.reply);
-                    }
-                }
-            });
-
-            containerFound = true;
-            break;
-        }
-        potentialContainer = potentialContainer.parentElement;
+    if (inputElement.tagName.toLowerCase() === 'textarea') {
+        inputElement.value = text;
+    } else {
+        inputElement.innerText = text;
     }
-
-    if (!containerFound && !button.disabled) { // Check disabled flag to avoid double alert
-        console.error("Gemini DM Assistant: Could not find conversation container.");
-        alert("会話履歴のコンテナを見つけることができませんでした。");
-    }
+    // Dispatch an 'input' event to notify the host page's framework (e.g., React).
+    inputElement.dispatchEvent(new Event('input', { bubbles: true, cancelable: true }));
+    console.log("Text inserted into:", inputElement);
 }
 
 
-/**
- * Adds the "Generate" button to the UI near the target element.
- * @param {HTMLElement} targetElement The element to anchor the button to.
- */
-function addGenerateButton(targetElement) {
-    const buttonId = 'gemini-generate-button';
-    if (document.getElementById(buttonId)) {
-        return;
-    }
+// Listen for messages from the popup or other parts of the extension.
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+    console.log("Message received in content script:", request);
 
-    const button = document.createElement('button');
-    button.id = buttonId;
-    button.textContent = '✨ 生成';
-
-    // Styling
-    button.style.marginLeft = '10px';
-    button.style.padding = '6px 12px';
-    button.style.border = '1px solid #ccc';
-    button.style.borderRadius = '8px';
-    button.style.cursor = 'pointer';
-    button.style.backgroundColor = '#f5f5f5';
-    button.style.fontSize = '14px';
-    button.style.fontWeight = 'bold';
-    button.style.color = '#333';
-    button.style.zIndex = '9999';
-
-    button.onclick = onGenerateButtonClick;
-
-    const parentContainer = targetElement.parentElement;
-    if (parentContainer) {
-        if (window.getComputedStyle(parentContainer).display !== 'flex') {
-             parentContainer.style.display = 'flex';
-             parentContainer.style.alignItems = 'center';
+    if (request.type === 'getConversationHtml') {
+        // Find the element that has focus on the page.
+        const activeElement = document.activeElement;
+        if (activeElement && (activeElement.tagName.toLowerCase() === 'textarea' || activeElement.isContentEditable)) {
+            const html = findConversationHtml(activeElement);
+            sendResponse({ html: html });
+        } else {
+            sendResponse({ html: null, error: "No active text input field found on the page. Please click on the message input box first." });
         }
-        targetElement.insertAdjacentElement('afterend', button);
-        console.log('Gemini DM Assistant: "Generate" button added to the page.');
+        // Return true to indicate we will respond asynchronously (although it's quick).
+        return true;
     }
-}
 
-// Use a MutationObserver to add the button when the text area appears in a SPA.
-const observer = new MutationObserver((mutations, obs) => {
-    const inputArea = findTextInputArea();
-    if (inputArea) {
-        addGenerateButton(inputArea);
+    if (request.type === 'insertText') {
+        const activeElement = document.activeElement;
+        if (activeElement && (activeElement.tagName.toLowerCase() === 'textarea' || activeElement.isContentEditable)) {
+            insertTextIntoInput(activeElement, request.text);
+            sendResponse({ success: true });
+        } else {
+            sendResponse({ success: false, error: "No active text input found to insert the reply." });
+        }
+        return true;
     }
 });
-
-observer.observe(document.body, {
-    childList: true,
-    subtree: true
-});
-
-console.log("Gemini DM Assistant: Content script loaded and observing DOM changes.");

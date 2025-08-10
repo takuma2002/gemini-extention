@@ -1,59 +1,64 @@
-// Gemini DM Assistant - background.js (Service Worker)
+// Gemini DM Assistant - background.js (Service Worker) - Refactored
 
 /**
- * Creates a detailed prompt for the Gemini API.
+ * Creates a detailed, dynamic prompt for the Gemini API.
  * @param {string} html - The HTML string of the conversation.
+ * @param {string} style - The desired tone/style for the reply (e.g., "丁寧な").
+ * @param {string} instructions - Specific user instructions for the reply.
  * @returns {string} The complete prompt to be sent to the API.
  */
-function createPrompt(html) {
+function createPrompt(html, style, instructions) {
     // A simple attempt to clean the HTML and reduce token count.
-    // This removes common attributes that don't affect content.
     const cleanHtml = html
         .replace(/ class="[^"]*"/g, '')
         .replace(/ style="[^"]*"/g, '')
         .replace(/ data-[\w-]*="[^"]*"/g, '');
 
+    // Dynamically build the instruction part of the prompt.
+    let instructionsPart = `返信は、利用者の視点から、**${style}**トーンで書いてください。`;
+    if (instructions && instructions.trim() !== '') {
+        instructionsPart += `\nさらに、以下の具体的な指示に従ってください:\n「${instructions}」`;
+    }
+
     // The prompt is in Japanese, as per the user's request.
-    return `
-あなたは、あるダイレクトメッセージの会話に返信するのを手伝うAIアシスタントです。
-以下に、会話スレッドのHTMLソースコードを示します。
+    return `あなたは、あるダイレクトメッセージの会話に返信するのを手伝うAIアシスタントです。
+以下に、会話スレッドのHTMLソースコードと、生成したい返信に関する指示を示します。
 
-あなたのタスクは以下の通りです。
-1. このHTMLを分析して、誰が何を発言したか、会話の流れを理解してください。
-2. その会話の文脈に最も適した、気の利いた返信を生成してください。
-3. 返信は、このスクリプトの利用者（つまり「自分」）の視点から書いてください。
-4. 出力は、生成した返信の文章だけにしてください。解説や、抽出した会話の要約、HTMLタグなどは一切含めないでください。純粋なテキストのみを返してください。
-
-HTMLソースコード:
 ---
+## 指示
+${instructionsPart}
+---
+## 会話のHTMLソースコード
 ${cleanHtml}
 ---
 
-生成する返信:
-`;
+上記の会話と指示に基づき、返信の文章だけを生成してください。解説、相槌、要約などは一切含めないでください。純粋なテキストのみを返してください。`;
 }
 
 /**
  * Handles the entire process of generating a reply using the Gemini API.
- * @param {string} html - The HTML from the content script.
+ * @param {object} request - The request object from the popup.
+ * @param {string} request.html - The HTML from the content script.
+ * @param {string} request.style - The desired style.
+ * @param {string} request.instructions - The user's instructions.
  * @returns {Promise<{reply: string}>} An object containing the generated reply.
  */
-async function handleGenerateReply(html) {
+async function handleGenerateReply(request) {
+    const { html, style, instructions } = request;
+
     // 1. Retrieve the API key from local storage.
     const { apiKey } = await chrome.storage.local.get('apiKey');
     if (!apiKey) {
         throw new Error("APIキーが設定されていません。拡張機能のオプションページで設定してください。");
     }
 
-    const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`;
-    const prompt = createPrompt(html);
+    const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${apiKey}`;
+    const prompt = createPrompt(html, style, instructions);
 
     // 2. Prepare the request body for the Gemini API.
     const requestBody = {
         contents: [{
-            parts: [{
-                text: prompt
-            }]
+            parts: [{ text: prompt }]
         }],
         generationConfig: {
             temperature: 0.7,
@@ -64,12 +69,10 @@ async function handleGenerateReply(html) {
     };
 
     // 3. Make the API call.
-    console.log("Sending request to Gemini API...");
+    console.log("Sending request to Gemini API with enhanced prompt.");
     const response = await fetch(API_URL, {
         method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(requestBody)
     });
 
@@ -93,22 +96,20 @@ async function handleGenerateReply(html) {
     return { reply: generatedText.trim() };
 }
 
-// Listen for messages from the content script.
+// Listen for messages from the popup.
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     if (request.type === 'generateReply') {
-        console.log("Background script received 'generateReply' message.");
+        console.log("Background script received 'generateReply' message with style and instructions.");
 
-        handleGenerateReply(request.html)
+        handleGenerateReply(request)
             .then(sendResponse)
             .catch(error => {
                 console.error("Error handling reply generation:", error);
-                // Send a structured error back to the content script.
                 sendResponse({ error: { message: error.message } });
             });
 
-        // Return true to indicate that the response will be sent asynchronously.
-        return true;
+        return true; // Indicates that the response will be sent asynchronously.
     }
 });
 
-console.log("Gemini DM Assistant background script loaded and listening for messages.");
+console.log("Gemini DM Assistant background script loaded (refactored).");
