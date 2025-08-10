@@ -45,7 +45,7 @@ async function handleGenerateReply(html) {
         throw new Error("APIキーが設定されていません。拡張機能のオプションページで設定してください。");
     }
 
-    const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`;
+    const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`;
     const prompt = createPrompt(html);
 
     // 2. Prepare the request body for the Gemini API.
