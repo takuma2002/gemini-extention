@@ -5,7 +5,8 @@
   "description": "DMの会話履歴から文脈を読み取り、Gemini APIを用いて返信案を生成します。",
   "permissions": [
     "storage",
-    "activeTab"
+    "activeTab",
+    "scripting"
   ],
   "content_security_policy": {
     "extension_pages": "script-src 'self'; object-src 'self';"
@@ -16,17 +17,6 @@
   "action": {
     "default_popup": "popup.html"
   },
-  "content_scripts": [
-    {
-      "matches": [
-        "https://*/*",
-        "http://*/*"
-      ],
-      "js": [
-        "content_script.js"
-      ]
-    }
-  ],
   "host_permissions": [
     "https://generativelanguage.googleapis.com/"
   ],
