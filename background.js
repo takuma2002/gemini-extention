@@ -1,21 +1,20 @@
-// Gemini DM Assistant - background.js (Service Worker) - Refactored v3 (English Prompt)
+// Gemini DM Assistant - background.js (Service Worker) - Refactored v4 (Robust Parsing)
 
 /**
  * Creates a detailed, dynamic, and high-quality prompt in English for the Gemini API.
- * @param {string} html - The HTML string of the conversation.
- * @param {string} style - The desired tone/style for the reply (in Japanese).
- * @param {string} instructions - Specific user instructions for the reply (in Japanese).
- * @param {string} lastSpeaker - Who sent the last message ("相手" or "自分").
- * @returns {string} The complete prompt to be sent to the API.
+ * (createPrompt function remains the same)
  */
 function createPrompt(html, style, instructions, lastSpeaker) {
-    // A simple attempt to clean the HTML and reduce token count.
     const cleanHtml = html
         .replace(/ class="[^"]*"/g, '')
         .replace(/ style="[^"]*"/g, '')
         .replace(/ data-[\w-]*="[^"]*"/g, '');
 
-    // The core prompt is now in English for better performance and instruction following.
+    const instructionsPart = `
+- **返信のトーン:** ${style}
+- **最後のメッセージ送信者:** ${lastSpeaker}。この人物の発言に対して返信を生成してください。
+- **追加の指示:** ${instructions && instructions.trim() !== '' ? `「${instructions}」` : '特になし'}`;
+
     return `
 You are a professional communication assistant AI. Your task is to generate a high-quality, natural-sounding reply based on the provided information.
 
@@ -70,7 +69,7 @@ async function handleGenerateReply(request) {
         },
     };
 
-    console.log("Sending request to Gemini API with English prompt.");
+    console.log(`Sending request to Gemini API (model: ${model})`);
     const response = await fetch(API_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -84,14 +83,26 @@ async function handleGenerateReply(request) {
     }
 
     const responseData = await response.json();
-    console.log("Received response from Gemini API.");
+    console.log("Received response from Gemini API:", JSON.stringify(responseData, null, 2));
 
-    if (!responseData.candidates || !responseData.candidates[0].content.parts[0].text) {
-        console.error("Invalid response structure from API:", responseData);
-        throw new Error("APIから予期しない形式の応答がありました。");
+    // --- NEW: Robust response parsing ---
+    if (!responseData.candidates || responseData.candidates.length === 0) {
+        if (responseData.promptFeedback && responseData.promptFeedback.blockReason) {
+            console.error("Response blocked by safety settings. Reason:", responseData.promptFeedback.blockReason);
+            throw new Error(`返信がブロックされました。理由: ${responseData.promptFeedback.blockReason}`);
+        } else {
+            console.error("Invalid response structure from API (no candidates):", responseData);
+            throw new Error("APIから予期しない、または空の応答がありました。");
+        }
     }
 
-    const generatedText = responseData.candidates[0].content.parts[0].text;
+    const candidate = responseData.candidates[0];
+    if (!candidate.content || !candidate.content.parts || candidate.content.parts.length === 0 || !candidate.content.parts[0].text) {
+        console.error("Invalid candidate structure in response:", candidate);
+        throw new Error("APIの応答内に、予期されたテキスト形式が見つかりませんでした。");
+    }
+
+    const generatedText = candidate.content.parts[0].text;
 
     return { reply: generatedText.trim() };
 }
@@ -112,4 +123,4 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     }
 });
 
-console.log("Gemini DM Assistant background script loaded (v4 - English prompt).");
+console.log("Gemini DM Assistant background script loaded (v5 - robust parsing).");
