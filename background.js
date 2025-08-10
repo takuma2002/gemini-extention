@@ -50,14 +50,14 @@ Based on all the information above, generate **only the text of the reply**.
  * @param {object} request - The request object from the popup.
  */
 async function handleGenerateReply(request) {
-    const { html, style, instructions, lastSpeaker } = request;
+    const { html, style, instructions, lastSpeaker, model } = request;
 
     const { apiKey } = await chrome.storage.local.get('apiKey');
     if (!apiKey) {
         throw new Error("APIキーが設定されていません。拡張機能のオプションページで設定してください。");
     }
 
-    const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${apiKey}`;
+    const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
     const prompt = createPrompt(html, style, instructions, lastSpeaker);
 
     const requestBody = {
