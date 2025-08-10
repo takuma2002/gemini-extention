@@ -39,13 +39,15 @@ document.addEventListener('DOMContentLoaded', () => {
             // --- 4. Get user inputs from the popup form ---
             const style = styleSelect.value;
             const instructions = instructionsInput.value;
+            const lastSpeaker = document.querySelector('input[name="last-speaker"]:checked').value;
 
             // --- 5. Send all data to the background script for API call ---
             const replyResponse = await chrome.runtime.sendMessage({
                 type: 'generateReply',
                 html: htmlResponse.html,
                 style: style,
-                instructions: instructions
+                instructions: instructions,
+                lastSpeaker: lastSpeaker
             });
 
             if (replyResponse.error) {
