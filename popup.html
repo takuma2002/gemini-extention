@@ -120,6 +120,16 @@
         #insert-btn:hover {
             background-color: #218838;
         }
+        .button-group {
+            display: flex;
+            gap: 10px;
+        }
+        .secondary-btn {
+            background-color: #6c757d;
+        }
+        .secondary-btn:hover:not(:disabled) {
+            background-color: #5a6268;
+        }
         #error-display {
             color: var(--error-color);
             font-size: 13px;
@@ -198,7 +208,10 @@
             </div>
         </div>
 
-        <button id="generate-btn">返信を生成</button>
+        <div class="button-group">
+            <button id="clear-btn" class="secondary-btn">クリア</button>
+            <button id="generate-btn">返信を生成</button>
+        </div>
 
         <div id="result-wrapper" class="hidden">
             <label>生成された返信</label>

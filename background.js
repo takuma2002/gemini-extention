@@ -90,7 +90,11 @@ async function handleGenerateReply(request) {
 
         const generatedText = responseData.choices[0].message.content;
 
-        return { reply: generatedText.trim(), log: log };
+        // Post-process the response to remove the <think> block, if it exists.
+        const thinkBlockRegex = /^<think>[\s\S]*?<\/think>\s*/;
+        const cleanedText = generatedText.trim().replace(thinkBlockRegex, '');
+
+        return { reply: cleanedText, log: log };
 
     } catch (error) {
         console.error("Error in handleGenerateReply:", error);
