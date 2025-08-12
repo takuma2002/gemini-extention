@@ -7,28 +7,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     const resultDisplay = document.getElementById('result-display');
     const insertBtn = document.getElementById('insert-btn');
     const errorDisplay = document.getElementById('error-display');
-    const modelRadios = document.querySelectorAll('input[name="model"]');
     // New elements for logging
     const logDetails = document.getElementById('log-details');
     const logRequest = document.getElementById('log-request');
     const logResponse = document.getElementById('log-response');
-
-    // --- Settings Persistence ---
-    const saveModelSelection = () => {
-        const selectedModel = document.querySelector('input[name="model"]:checked').value;
-        chrome.storage.local.set({ selectedModel: selectedModel });
-    };
-
-    const restoreModelSelection = async () => {
-        const { selectedModel } = await chrome.storage.local.get({ selectedModel: 'gemini-2.5-flash-lite' });
-        const radioToSelect = document.querySelector(`input[name="model"][value="${selectedModel}"]`);
-        if (radioToSelect) {
-            radioToSelect.checked = true;
-        }
-    };
-
-    modelRadios.forEach(radio => radio.addEventListener('change', saveModelSelection));
-    await restoreModelSelection();
 
     // --- Inject content script on popup open ---
     try {
@@ -72,7 +54,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             const style = styleSelect.value;
             const instructions = instructionsInput.value;
             const lastSpeaker = document.querySelector('input[name="last-speaker"]:checked').value;
-            const selectedModel = document.querySelector('input[name="model"]:checked').value;
 
             // --- 2. Send data to background and get response ---
             const responseFromBg = await chrome.runtime.sendMessage({
@@ -80,8 +61,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 html: htmlResponse.html,
                 style: style,
                 instructions: instructions,
-                lastSpeaker: lastSpeaker,
-                model: selectedModel
+                lastSpeaker: lastSpeaker
             });
 
             // --- 3. Display logs regardless of success or failure ---

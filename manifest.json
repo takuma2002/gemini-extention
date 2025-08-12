@@ -18,7 +18,7 @@
     "default_popup": "popup.html"
   },
   "host_permissions": [
-    "https://generativelanguage.googleapis.com/"
+    "https://openrouter.ai/"
   ],
   "options_ui": {
     "page": "options.html",
