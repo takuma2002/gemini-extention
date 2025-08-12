@@ -1,11 +1,42 @@
-// Gemini DM Assistant - content_script.js (Refactored)
+// Gemini DM Assistant - content_script.js (Refactored v7 - with HTML cleaning)
 
 console.log("Gemini DM Assistant: Content script loaded and listening for popup commands.");
+
+
+/**
+ * Cleans the given HTML element by removing unwanted tags and attributes.
+ * This function operates on a clone of the node to avoid affecting the live page.
+ * @param {HTMLElement} element - The HTML element to clean.
+ * @returns {string} The cleaned inner HTML string.
+ */
+function getCleanedHtml(element) {
+    const clonedElement = element.cloneNode(true);
+    const selectorsToRemove = ['script', 'style', 'svg', 'iframe', 'noscript', 'link', 'meta'];
+    const allowedAttributes = ['href', 'src', 'alt', 'title'];
+
+    // Remove unwanted tags
+    selectorsToRemove.forEach(selector => {
+        clonedElement.querySelectorAll(selector).forEach(el => el.remove());
+    });
+
+    // Remove unwanted attributes from all remaining elements
+    const allElements = clonedElement.querySelectorAll('*');
+    allElements.forEach(el => {
+        for (const attr of [...el.attributes]) {
+            if (!allowedAttributes.includes(attr.name.toLowerCase())) {
+                el.removeAttribute(attr.name);
+            }
+        }
+    });
+
+    return clonedElement.innerHTML;
+}
+
 
 /**
  * Heuristic to find the conversation container relative to a given element.
  * @param {HTMLElement} startElement - The element to start searching from (e.g., the active input).
- * @returns {string|null} The innerHTML of the container, or null if not found.
+ * @returns {string|null} The cleaned innerHTML of the container, or null if not found.
  */
 function findConversationHtml(startElement) {
     if (!startElement) {
@@ -20,8 +51,9 @@ function findConversationHtml(startElement) {
         const style = window.getComputedStyle(potentialContainer);
         // Look for a scrollable element with a reasonable height.
         if ((style.overflowY === 'auto' || style.overflowY === 'scroll') && potentialContainer.clientHeight > 200) {
-            console.log("Found conversation container:", potentialContainer);
-            return potentialContainer.innerHTML;
+            console.log("Found potential conversation container:", potentialContainer);
+            // NEW: Clean the HTML before returning
+            return getCleanedHtml(potentialContainer);
         }
         potentialContainer = potentialContainer.parentElement;
     }
@@ -45,7 +77,6 @@ function insertTextIntoInput(inputElement, text) {
     } else {
         inputElement.innerText = text;
     }
-    // Dispatch an 'input' event to notify the host page's framework (e.g., React).
     inputElement.dispatchEvent(new Event('input', { bubbles: true, cancelable: true }));
     console.log("Text inserted into:", inputElement);
 }
@@ -56,7 +87,6 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     console.log("Message received in content script:", request);
 
     if (request.type === 'getConversationHtml') {
-        // Find the element that has focus on the page.
         const activeElement = document.activeElement;
         if (activeElement && (activeElement.tagName.toLowerCase() === 'textarea' || activeElement.isContentEditable)) {
             const html = findConversationHtml(activeElement);
@@ -64,7 +94,6 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         } else {
             sendResponse({ html: null, error: "No active text input field found on the page. Please click on the message input box first." });
         }
-        // Return true to indicate we will respond asynchronously (although it's quick).
         return true;
     }
 
