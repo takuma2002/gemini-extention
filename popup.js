@@ -13,6 +13,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         logDetails: document.getElementById('log-details'),
         logRequest: document.getElementById('log-request'),
         logResponse: document.getElementById('log-response'),
+        charCounter: document.getElementById('char-counter'), // New UI element
     };
 
     const storageKey = 'popupState';
@@ -36,7 +37,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     const restoreState = async () => {
         const data = await chrome.storage.session.get(storageKey);
         const state = data[storageKey];
-        if (!state) return;
+        if (!state) {
+            updateCharCounter(); // Update counter even if no state
+            return;
+        }
 
         ui.styleSelect.value = state.style || '丁寧な';
         ui.instructionsInput.value = state.instructions || '';
@@ -52,6 +56,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             ui.logDetails.classList.remove('hidden');
             ui.logDetails.open = true;
         }
+        updateCharCounter(); // Update counter after restoring state
     };
 
     const clearState = async () => {
@@ -64,24 +69,36 @@ document.addEventListener('DOMContentLoaded', async () => {
         ui.resultDisplay.textContent = '';
         ui.logRequest.textContent = '';
         ui.logResponse.textContent = '';
+        updateCharCounter();
         await chrome.storage.session.remove(storageKey);
     };
+
+    // --- New: Character Counter Logic ---
+    const updateCharCounter = () => {
+        const maxLength = ui.instructionsInput.maxLength;
+        const currentLength = ui.instructionsInput.value.length;
+        ui.charCounter.textContent = `${currentLength} / ${maxLength}`;
+    };
+
 
     // --- Event Listeners ---
 
     // Save state on any input change
     ui.styleSelect.addEventListener('change', saveState);
-    ui.instructionsInput.addEventListener('input', saveState);
+    ui.instructionsInput.addEventListener('input', () => {
+        updateCharCounter();
+        saveState();
+    });
     ui.lastSpeakerRadios.forEach(radio => radio.addEventListener('change', saveState));
 
     // Clear button logic
     ui.clearBtn.addEventListener('click', clearState);
 
-    // Generate button logic
+    // Generate button logic (remains the same)
     ui.generateBtn.addEventListener('click', async () => {
         ui.errorDisplay.textContent = '';
-        ui.resultWrapper.classList.add('hidden');
-        ui.logDetails.classList.add('hidden');
+        resultWrapper.classList.add('hidden');
+        logDetails.classList.add('hidden');
         ui.generateBtn.disabled = true;
         ui.generateBtn.textContent = '生成中...';
 
@@ -100,7 +117,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 html: htmlResponse.html,
                 style: ui.styleSelect.value,
                 instructions: ui.instructionsInput.value,
-                lastSpeaker: document.querySelector('input[name="last-speaker"]:checked').value
+                lastSpeaker: document.querySelector('input[name="last-speaker"]:checked').value,
             });
 
             if (responseFromBg.log) {
@@ -116,19 +133,19 @@ document.addEventListener('DOMContentLoaded', async () => {
             ui.resultDisplay.textContent = responseFromBg.reply;
             ui.resultWrapper.classList.remove('hidden');
 
-            await saveState(); // Save the successful result
+            await saveState();
 
         } catch (error) {
             console.error("Error during generation process:", error);
             ui.errorDisplay.textContent = `エラー: ${error.message}`;
-            await saveState(); // Save state even on error to show logs
+            await saveState();
         } finally {
             ui.generateBtn.disabled = false;
             ui.generateBtn.textContent = '返信を生成';
         }
     });
 
-    // Insert button logic
+    // Insert button logic (remains the same)
     ui.insertBtn.addEventListener('click', async () => {
         const textToInsert = ui.resultDisplay.textContent;
         if (!textToInsert) return;
@@ -144,10 +161,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // --- Initial Setup ---
 
-    // Restore state first
     await restoreState();
 
-    // Then inject content script
     try {
         const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
         if (tab && tab.id) {

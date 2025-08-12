@@ -120,6 +120,12 @@
         #insert-btn:hover {
             background-color: #218838;
         }
+        .char-counter {
+            text-align: right;
+            font-size: 12px;
+            color: #6c757d;
+            margin-top: 4px;
+        }
         .button-group {
             display: flex;
             gap: 10px;
@@ -191,7 +197,8 @@
 
         <div>
             <label for="instructions">追加の指示 (任意)</label>
-            <textarea id="instructions" placeholder="例: 感謝を伝えつつ、会議の日程調整を提案する"></textarea>
+            <textarea id="instructions" placeholder="例: 感謝を伝えつつ、会議の日程調整を提案する" maxlength="500"></textarea>
+            <div id="char-counter" class="char-counter">500 / 500</div>
         </div>
 
         <div>

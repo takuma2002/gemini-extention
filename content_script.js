@@ -12,21 +12,16 @@ console.log("Gemini DM Assistant: Content script loaded and listening for popup 
 function getCleanedHtml(element) {
     const clonedElement = element.cloneNode(true);
     const selectorsToRemove = ['script', 'style', 'svg', 'iframe', 'noscript', 'link', 'meta'];
-    const allowedAttributes = ['href', 'src', 'alt', 'title'];
-
     // Remove unwanted tags
     selectorsToRemove.forEach(selector => {
         clonedElement.querySelectorAll(selector).forEach(el => el.remove());
     });
 
-    // Remove unwanted attributes from all remaining elements
+    // Remove ALL attributes from all remaining elements for maximum token saving.
     const allElements = clonedElement.querySelectorAll('*');
     allElements.forEach(el => {
-        for (const attr of [...el.attributes]) {
-            if (!allowedAttributes.includes(attr.name.toLowerCase())) {
-                el.removeAttribute(attr.name);
-            }
-        }
+        const attrs = el.getAttributeNames();
+        attrs.forEach(attr => el.removeAttribute(attr));
     });
 
     return clonedElement.innerHTML;
