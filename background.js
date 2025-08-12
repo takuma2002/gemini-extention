@@ -49,7 +49,7 @@ ${cleanHtml}
  */
 async function handleGenerateReply(request) {
     const { html, style, instructions, lastSpeaker } = request;
-    const model = "qwen/qwen2-72b-instruct:free"; // Hardcoded model as requested
+    const model = "qwen/qwen3-235b-a22b:free"; // Hardcoded model as requested
     let requestBody; // To store for logging
 
     try {
