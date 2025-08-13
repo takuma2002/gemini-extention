@@ -1,5 +1,3 @@
-// NOTE: This is a test script for development and is not part of the extension's runtime code.
-
 /**
  * Creates the messages array for the OpenRouter (OpenAI-compatible) API.
  * This is a copy of the function from background.js for isolated testing.
@@ -50,43 +48,38 @@ ${html}
     ];
 }
 
-// --- Test Data ---
-const sampleCleanedHtml = `
-<div>
-    <div>
-        <p>こんにちは！お元気ですか？</p>
-    </div>
-    <div>
-        <p>はい、元気です。srcフォルダの件、ありがとうございます。</p>
-        <a>A link that should have its href removed</a>
-    </div>
-</div>`;
-const sampleStyle = "丁寧な";
-const sampleInstructions = "感謝を伝え、週末の予定を尋ねる。";
-const sampleLastSpeaker = "相手";
+describe('createMessages', () => {
+    const sampleHtml = '<div>Hello</div>';
+    const sampleStyle = '丁寧な';
+    const sampleInstructions = 'Test instructions';
+    const sampleLastSpeaker = '相手';
 
-// --- Test Execution ---
-console.log("--- Testing Prompt Building ---");
+    it('should not include translation instructions when displayLanguage is "auto"', () => {
+        const messages = createMessages(sampleHtml, sampleStyle, sampleInstructions, sampleLastSpeaker, 'auto');
+        const systemPrompt = messages.find(m => m.role === 'system').content;
+        expect(systemPrompt).not.toContain('---TRANSLATION---');
+    });
 
-// Test Case 1: No translation requested (auto mode)
-console.log("\n[1] Testing with displayLanguage = 'auto'");
-const messagesAuto = createMessages(sampleCleanedHtml, sampleStyle, sampleInstructions, sampleLastSpeaker, 'auto');
-console.log(JSON.stringify(messagesAuto[0], null, 2)); // Only log system prompt for brevity
-if (messagesAuto[0].content.includes('---TRANSLATION---')) {
-    console.error("TEST FAILED: Translation instructions were added in 'auto' mode.");
-} else {
-    console.log("TEST PASSED: Translation instructions were not added.");
-}
+    it('should not include translation instructions when displayLanguage is null or undefined', () => {
+        const messages1 = createMessages(sampleHtml, sampleStyle, sampleInstructions, sampleLastSpeaker, null);
+        const systemPrompt1 = messages1.find(m => m.role === 'system').content;
+        expect(systemPrompt1).not.toContain('---TRANSLATION---');
 
+        const messages2 = createMessages(sampleHtml, sampleStyle, sampleInstructions, sampleLastSpeaker, undefined);
+        const systemPrompt2 = messages2.find(m => m.role === 'system').content;
+        expect(systemPrompt2).not.toContain('---TRANSLATION---');
+    });
 
-// Test Case 2: English translation requested
-console.log("\n[2] Testing with displayLanguage = 'en'");
-const messagesEn = createMessages(sampleCleanedHtml, sampleStyle, sampleInstructions, sampleLastSpeaker, 'en');
-console.log(JSON.stringify(messagesEn[0], null, 2)); // Only log system prompt for brevity
-if (messagesEn[0].content.includes('---TRANSLATION---') && messagesEn[0].content.includes('English')) {
-    console.log("TEST PASSED: Translation instructions for English were added.");
-} else {
-    console.error("TEST FAILED: Translation instructions for English were not added correctly.");
-}
+    it('should include translation instructions when a specific language is provided', () => {
+        const messages = createMessages(sampleHtml, sampleStyle, sampleInstructions, sampleLastSpeaker, 'en');
+        const systemPrompt = messages.find(m => m.role === 'system').content;
+        expect(systemPrompt).toContain('---TRANSLATION---');
+        expect(systemPrompt).toContain('display language is English');
+    });
 
-console.log("\n--- Test Complete ---");
+    it('should correctly map "ja" to "Japanese"', () => {
+        const messages = createMessages(sampleHtml, sampleStyle, sampleInstructions, sampleLastSpeaker, 'ja');
+        const systemPrompt = messages.find(m => m.role === 'system').content;
+        expect(systemPrompt).toContain('display language is Japanese');
+    });
+});
