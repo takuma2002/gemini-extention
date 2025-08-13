@@ -1,30 +1,57 @@
-// Gemini DM Assistant - content_script.js (Refactored v7 - with HTML cleaning)
+// Gemini DM Assistant - content_script.js (Refactored v8 - Advanced Cleaning)
 
 console.log("Gemini DM Assistant: Content script loaded and listening for popup commands.");
 
-
 /**
- * Cleans the given HTML element by removing unwanted tags and attributes.
- * This function operates on a clone of the node to avoid affecting the live page.
+ * Performs an advanced cleaning of the given HTML element to optimize for token count
+ * while preserving essential content and structure.
  * @param {HTMLElement} element - The HTML element to clean.
  * @returns {string} The cleaned inner HTML string.
  */
 function getCleanedHtml(element) {
     const clonedElement = element.cloneNode(true);
-    const selectorsToRemove = ['script', 'style', 'svg', 'iframe', 'noscript', 'link', 'meta'];
-    // Remove unwanted tags
+
+    // --- Pass 1: Remove unwanted tags entirely ---
+    const selectorsToRemove = ['script', 'style', 'svg', 'iframe', 'noscript', 'link', 'meta', 'button', 'input'];
     selectorsToRemove.forEach(selector => {
         clonedElement.querySelectorAll(selector).forEach(el => el.remove());
     });
 
-    // Remove ALL attributes from all remaining elements for maximum token saving.
+    // --- Pass 2: Filter attributes, keeping only meaningful ones ---
+    const allowedAttributes = ['alt', 'title', 'aria-label', 'datetime', 'href', 'src'];
     const allElements = clonedElement.querySelectorAll('*');
     allElements.forEach(el => {
-        const attrs = el.getAttributeNames();
-        attrs.forEach(attr => el.removeAttribute(attr));
+        const attrsToRemove = [];
+        for (const attr of el.attributes) {
+            if (!allowedAttributes.includes(attr.name.toLowerCase())) {
+                attrsToRemove.push(attr.name);
+            }
+        }
+        attrsToRemove.forEach(attrName => el.removeAttribute(attrName));
     });
 
-    return clonedElement.innerHTML;
+    // --- Pass 3: Simplify redundant nested structures ---
+    // This is a complex task. A simple heuristic: unwrap divs that only contain another div.
+    // We'll run this multiple times to collapse deeply nested wrappers.
+    for (let i = 0; i < 5; i++) { // Run 5 passes to be safe
+        clonedElement.querySelectorAll('div').forEach(div => {
+            // Check if it has exactly one child element which is also a div, and no text nodes.
+            if (div.children.length === 1 && div.children[0].tagName === 'DIV' && !Array.from(div.childNodes).some(node => node.nodeType === 3 && node.textContent.trim() !== '')) {
+                // Replace the parent div with its child
+                div.parentNode.replaceChild(div.children[0], div);
+            }
+        });
+    }
+
+    // --- Pass 4: Collapse whitespace ---
+    // Use the final HTML string and replace multiple whitespace characters with a single space.
+    // Also trim leading/trailing whitespace from each line.
+    let finalHtml = clonedElement.innerHTML;
+    finalHtml = finalHtml.split('\n').map(line => line.trim()).join('\n');
+    finalHtml = finalHtml.replace(/\s{2,}/g, ' '); // Collapse spaces
+    finalHtml = finalHtml.replace(/>\s+</g, '><'); // Remove space between tags
+
+    return finalHtml;
 }
 
 
@@ -40,15 +67,13 @@ function findConversationHtml(startElement) {
     }
 
     let potentialContainer = startElement;
-    for (let i = 0; i < 15; i++) { // Search up to 15 levels up the DOM tree
+    for (let i = 0; i < 15; i++) {
         if (!potentialContainer) break;
 
         const style = window.getComputedStyle(potentialContainer);
-        // Look for a scrollable element with a reasonable height.
         if ((style.overflowY === 'auto' || style.overflowY === 'scroll') && potentialContainer.clientHeight > 200) {
             console.log("Found potential conversation container:", potentialContainer);
-            // NEW: Clean the HTML before returning
-            return getCleanedHtml(potentialContainer);
+            return getCleanedHtml(potentialContainer); // Use the advanced cleaner
         }
         potentialContainer = potentialContainer.parentElement;
     }
@@ -66,7 +91,6 @@ function insertTextIntoInput(inputElement, text) {
         console.error("No input element found to insert text.");
         return;
     }
-
     if (inputElement.tagName.toLowerCase() === 'textarea') {
         inputElement.value = text;
     } else {
