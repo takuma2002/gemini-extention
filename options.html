@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Gemini DM Assistant 設定</title>
+    <title>__MSG_options_pageTitle__</title>
     <meta charset="UTF-8">
     <style>
         :root {
@@ -92,11 +92,23 @@
 </head>
 <body>
     <div class="container">
-        <h1>DM 返信アシスタント 設定</h1>
-        <p>OpenRouterから取得したAPIキーを入力してください。<br>入力されたキーはお使いのブラウザの安全な領域にのみ保存されます。</p>
-        <label for="api-key">OpenRouter API Key</label>
-        <input type="password" id="api-key" placeholder="sk-or-...">
-        <button id="save">保存</button>
+        <h1>__MSG_options_title__</h1>
+        <p>__MSG_options_description__</p>
+        <label for="api-key">__MSG_options_apiKeyLabel__</label>
+        <input type="password" id="api-key" placeholder="sk-or-..." style="margin-bottom: 10px;">
+
+        <div style="margin-top: 20px;">
+            <label for="display-language">__MSG_options_displayLanguageLabel__</label>
+            <select id="display-language" style="width: 100%; padding: 12px; border-radius: 6px; border: 1px solid var(--border-color); font-size: 14px;">
+                <option value="auto">__MSG_options_lang_auto__</option>
+                <option value="ja">__MSG_options_lang_ja__</option>
+                <option value="en">__MSG_options_lang_en__</option>
+                <option value="zh">__MSG_options_lang_zh__</option>
+            </select>
+            <p style="font-size: 12px; color: var(--label-color); margin-top: 8px;">__MSG_options_displayLanguageNote__</p>
+        </div>
+
+        <button id="save" style="margin-top: 20px;">__MSG_options_saveBtn__</button>
         <div id="status"></div>
     </div>
     <script src="options.js"></script>

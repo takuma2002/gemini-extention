@@ -1,8 +1,9 @@
 {
   "manifest_version": 3,
-  "name": "AI DM 返信アシスタント",
+  "default_locale": "ja",
+  "name": "__MSG_extensionName__",
   "version": "1.0",
-  "description": "DMの会話履歴から文脈を読み取り、AIを用いて返信案を生成します。",
+  "description": "__MSG_extensionDescription__",
   "permissions": [
     "storage",
     "activeTab",

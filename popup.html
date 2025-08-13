@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Gemini DM Assistant</title>
+    <title>__MSG_popup_pageTitle__</title>
     <meta charset="UTF-8">
     <style>
         :root {
@@ -29,11 +29,37 @@
             flex-direction: column;
             gap: 18px;
         }
+        .header {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative; /* For positioning the settings icon */
+        }
         h2 {
             font-size: 18px;
             margin: 0;
             color: var(--text-color);
             text-align: center;
+        }
+        #settings-btn {
+            position: absolute;
+            right: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            padding: 4px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        #settings-btn:hover {
+            background-color: #e2e8f0;
+        }
+        #settings-btn svg {
+            width: 20px;
+            height: 20px;
+            fill: #4a5568;
         }
         label {
             font-weight: 600;
@@ -202,68 +228,81 @@
 </head>
 <body>
     <div class="container">
-        <h2>AI 返信アシスタント</h2>
+        <div class="header">
+            <h2>__MSG_popupTitle__</h2>
+            <a id="settings-btn" title="__MSG_settings_open__">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19.14,12.94c0.04-0.3,0.06-0.61,0.06-0.94c0-0.32-0.02-0.64-0.07-0.94l2.03-1.58c0.18-0.14,0.23-0.41,0.12-0.61 l-1.92-3.32c-0.12-0.22-0.37-0.29-0.59-0.22l-2.39,0.96c-0.5-0.38-1.03-0.69-1.62-0.92L14.4,2.23c-0.04-0.24-0.24-0.41-0.48-0.41 h-3.84c-0.24,0-0.44,0.17-0.48,0.41L9.15,4.59C8.56,4.82,8.03,5.14,7.53,5.51L5.14,4.55C4.92,4.48,4.67,4.55,4.55,4.75L2.63,8.07 c-0.11,0.2-0.06,0.47,0.12,0.61l2.03,1.58C4.74,10.64,4.72,10.96,4.72,11.28c0,0.33,0.02,0.64,0.07,0.95l-2.03,1.58 c-0.18,0.14-0.23,0.41-0.12,0.61l1.92,3.32c0.12,0.22,0.37,0.29,0.59,0.22l2.39-0.96c0.5,0.38,1.03,0.69,1.62,0.92L9.6,21.77 c0.04,0.24,0.24,0.41,0.48,0.41h3.84c0.24,0,0.44-0.17,0.48-0.41l0.45-2.34c0.59-0.23,1.12-0.54,1.62-0.92l2.39,0.96 c0.22,0.08,0.47,0.01,0.59-0.22l1.92-3.32c0.11-0.2,0.06-0.47-0.12-0.61L19.14,12.94z M12,15.6c-1.98,0-3.6-1.62-3.6-3.6 s1.62-3.6,3.6-3.6s3.6,1.62,3.6,3.6S13.98,15.6,12,15.6z"/></svg>
+            </a>
+        </div>
 
         <div>
-            <label for="reply-style">返信スタイル</label>
+            <label for="reply-style">__MSG_popup_replyStyle__</label>
             <select id="reply-style">
-                <option value="丁寧な">丁寧な</option>
-                <option value="カジュアルな">カジュアルな</option>
-                <option value="ビジネスライクな">ビジネスライクな</option>
-                <option value="フレンドリーな">フレンドリーな</option>
-                <option value="簡潔な">簡潔な</option>
+                <option value="丁寧な">__MSG_style_polite__</option>
+                <option value="カジュアルな">__MSG_style_casual__</option>
+                <option value="ビジネスライクな">__MSG_style_businesslike__</option>
+                <option value="フレンドリーな">__MSG_style_friendly__</option>
+                <option value="簡潔な">__MSG_style_concise__</option>
             </select>
         </div>
 
         <div>
-            <label for="instructions">追加の指示 (任意)</label>
-            <textarea id="instructions" placeholder="例: 感謝を伝えつつ、会議の日程調整を提案する" maxlength="500"></textarea>
+            <label for="instructions">__MSG_popup_additionalInstructions__</label>
+            <textarea id="instructions" placeholder="__MSG_popup_instructionsPlaceholder__" maxlength="500"></textarea>
             <div id="char-counter" class="char-counter">500 / 500</div>
         </div>
 
         <div>
-            <label>最後のメッセージ送信者</label>
+            <label>__MSG_popup_lastSpeaker__</label>
             <div class="radio-group">
                 <div class="radio-item">
                     <input type="radio" id="last-speaker-other" name="last-speaker" value="相手" checked>
-                    <label for="last-speaker-other">相手</label>
+                    <label for="last-speaker-other">__MSG_popup_speakerOther__</label>
                 </div>
                 <div class="radio-item">
                     <input type="radio" id="last-speaker-me" name="last-speaker" value="自分">
-                    <label for="last-speaker-me">自分</label>
+                    <label for="last-speaker-me">__MSG_popup_speakerMe__</label>
                 </div>
             </div>
         </div>
 
         <div class="button-group">
-            <button id="clear-btn" class="secondary-btn">クリア</button>
-            <button id="generate-btn">返信を生成</button>
+            <button id="clear-btn" class="secondary-btn">__MSG_popup_clearBtn__</button>
+            <button id="generate-btn">__MSG_popup_generateBtn__</button>
         </div>
 
         <div id="result-wrapper" class="hidden">
-            <label>生成された返信</label>
+            <label>__MSG_popup_generatedReply__</label>
             <div id="result-display" class="result-container"></div>
             <div class="button-group" style="margin-top: 10px;">
-                <button id="copy-btn" class="hidden">テキストをコピー</button>
-                <button id="insert-btn">ページに挿入</button>
+                <button id="copy-btn" class="hidden">__MSG_popup_copyBtn__</button>
+                <button id="insert-btn">__MSG_popup_insertBtn__</button>
+            </div>
+        </div>
+
+        <div id="translation-wrapper" class="hidden" style="margin-top: 15px;">
+            <label>__MSG_popup_translatedReply__</label>
+            <div id="translation-display" class="result-container"></div>
+            <div class="button-group" style="margin-top: 10px;">
+                <button id="copy-translation-btn" class="secondary-btn">__MSG_popup_copyTranslationBtn__</button>
             </div>
         </div>
 
         <div id="error-display" class="error-container"></div>
 
         <details id="log-details" class="hidden">
-            <summary>APIログを表示</summary>
+            <summary>__MSG_popup_showApiLog__</summary>
             <div class="log-container">
-                <h4>Request Body:</h4>
+                <h4>__MSG_log_requestBody__</h4>
                 <pre id="log-request"></pre>
-                <h4>API Response:</h4>
+                <h4>__MSG_log_apiResponse__</h4>
                 <pre id="log-response"></pre>
             </div>
         </details>
 
         <div class="footer-container">
-            <a href="#" id="manual-select-btn" class="footer-link">手動で選択</a>
-            <a href="#" id="report-issue-link" class="footer-link">問題を報告</a>
+            <a href="#" id="manual-select-btn" class="footer-link">__MSG_popup_manualSelect__</a>
+            <a href="#" id="report-issue-link" class="footer-link">__MSG_popup_reportIssue__</a>
         </div>
     </div>
     <script src="popup.js"></script>

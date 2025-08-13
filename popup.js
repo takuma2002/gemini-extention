@@ -17,6 +17,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         charCounter: document.getElementById('char-counter'),
         reportIssueLink: document.getElementById('report-issue-link'),
         manualSelectBtn: document.getElementById('manual-select-btn'),
+        settingsBtn: document.getElementById('settings-btn'),
+        translationWrapper: document.getElementById('translation-wrapper'),
+        translationDisplay: document.getElementById('translation-display'),
+        copyTranslationBtn: document.getElementById('copy-translation-btn'),
     };
 
     const storageKey = 'popupState';
@@ -72,6 +76,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         ui.instructionsInput.value = '';
         document.getElementById('last-speaker-other').checked = true;
         ui.resultWrapper.classList.add('hidden');
+        ui.translationWrapper.classList.add('hidden');
         ui.logDetails.classList.add('hidden');
         ui.errorDisplay.textContent = '';
         ui.resultDisplay.textContent = '';
@@ -99,8 +104,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         event.preventDefault();
         const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
         const pageUrl = tab ? tab.url : 'Unknown URL';
-        const subject = encodeURIComponent("AI DM 返信アシスタントの問題報告");
-        const body = encodeURIComponent(`\n問題が発生したページのURL: ${pageUrl}\n\n---\n問題の詳細を以下にご記入ください：\n(例：会話の読み込みがうまくいかない、返信が期待と違う、など)\n\n\n\n---\n`);
+        const subject = encodeURIComponent(chrome.i18n.getMessage("report_subject"));
+        const body = encodeURIComponent(chrome.i18n.getMessage("report_body", [pageUrl]));
         chrome.tabs.create({ url: `mailto:support@example.com?subject=${subject}&body=${body}` });
     });
 
@@ -113,26 +118,31 @@ document.addEventListener('DOMContentLoaded', async () => {
                 window.close();
             }
         } catch (error) {
-            ui.errorDisplay.textContent = `エラー: ${error.message}`;
+            ui.errorDisplay.textContent = chrome.i18n.getMessage("error_prefix", [error.message]);
         }
+    });
+
+    ui.settingsBtn.addEventListener('click', () => {
+        chrome.runtime.openOptionsPage();
     });
 
     // --- Main Generate Logic ---
     ui.generateBtn.addEventListener('click', async () => {
         ui.errorDisplay.textContent = '';
         ui.resultWrapper.classList.add('hidden');
+        ui.translationWrapper.classList.add('hidden');
         ui.logDetails.classList.add('hidden');
         ui.generateBtn.disabled = true;
-        ui.generateBtn.textContent = '生成中...';
+        ui.generateBtn.textContent = chrome.i18n.getMessage("popup_generateBtn_generating");
         try {
             const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-            if (!tab) throw new Error("アクティブなタブが見つかりません。");
+            if (!tab) throw new Error(chrome.i18n.getMessage("error_noActiveTab"));
             const htmlResponse = await chrome.tabs.sendMessage(tab.id, { type: 'getConversationHtml' });
             if (chrome.runtime.lastError || !htmlResponse) {
-                throw new Error("コンテンツスクリプトとの接続に失敗しました。ページをリロードしてください。");
+                throw new Error(chrome.i18n.getMessage("error_scriptConnection"));
             }
             if (htmlResponse.error || !htmlResponse.html) {
-                throw new Error(htmlResponse.error || "ページから会話コンテンツを特定できませんでした。");
+                throw new Error(htmlResponse.error || chrome.i18n.getMessage("error_noConversationContent"));
             }
             const responseFromBg = await chrome.runtime.sendMessage({
                 type: 'generateReply',
@@ -147,8 +157,15 @@ document.addEventListener('DOMContentLoaded', async () => {
                 ui.logDetails.classList.remove('hidden');
             }
             if (responseFromBg.error) throw new Error(responseFromBg.error.message);
+
             ui.resultDisplay.textContent = responseFromBg.reply;
             ui.resultWrapper.classList.remove('hidden');
+
+            if (responseFromBg.translatedReply) {
+                ui.translationDisplay.textContent = responseFromBg.translatedReply;
+                ui.translationWrapper.classList.remove('hidden');
+            }
+
             if (htmlResponse.inputFieldFound) {
                 ui.insertBtn.classList.remove('hidden');
                 ui.copyBtn.classList.add('hidden');
@@ -158,11 +175,11 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
             await saveState();
         } catch (error) {
-            ui.errorDisplay.textContent = `エラー: ${error.message}`;
+            ui.errorDisplay.textContent = chrome.i18n.getMessage("error_prefix", [error.message]);
             await saveState();
         } finally {
             ui.generateBtn.disabled = false;
-            ui.generateBtn.textContent = '返信を生成';
+            ui.generateBtn.textContent = chrome.i18n.getMessage("popup_generateBtn");
         }
     });
 
@@ -172,21 +189,34 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (!textToInsert) return;
         try {
             const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-            if (!tab) throw new Error("アクティブなタブが見つかりません。");
+            if (!tab) throw new Error(chrome.i18n.getMessage("error_noActiveTab"));
             await chrome.tabs.sendMessage(tab.id, { type: 'insertText', text: textToInsert });
             window.close();
         } catch (error) {
-            ui.errorDisplay.textContent = `挿入エラー: ${error.message}`;
+            ui.errorDisplay.textContent = chrome.i18n.getMessage("error_insertPrefix", [error.message]);
         }
     });
     ui.copyBtn.addEventListener('click', () => {
         const textToCopy = ui.resultDisplay.textContent;
         if (!textToCopy) return;
         navigator.clipboard.writeText(textToCopy).then(() => {
-            ui.copyBtn.textContent = 'コピーしました！';
-            setTimeout(() => { ui.copyBtn.textContent = 'テキストをコピー'; }, 1500);
+            ui.copyBtn.textContent = chrome.i18n.getMessage("popup_copyBtn_copied");
+            setTimeout(() => { ui.copyBtn.textContent = chrome.i18n.getMessage("popup_copyBtn"); }, 1500);
         }).catch(err => {
-            ui.errorDisplay.textContent = 'コピーに失敗しました。';
+            ui.errorDisplay.textContent = chrome.i18n.getMessage("error_copyFailed");
+        });
+    });
+
+    ui.copyTranslationBtn.addEventListener('click', () => {
+        const textToCopy = ui.translationDisplay.textContent;
+        if (!textToCopy) return;
+        navigator.clipboard.writeText(textToCopy).then(() => {
+            ui.copyTranslationBtn.textContent = chrome.i18n.getMessage("popup_copyBtn_copied");
+            setTimeout(() => {
+                ui.copyTranslationBtn.textContent = chrome.i18n.getMessage("popup_copyTranslationBtn");
+            }, 1500);
+        }).catch(err => {
+            ui.errorDisplay.textContent = chrome.i18n.getMessage("error_copyFailed");
         });
     });
 
@@ -201,7 +231,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             });
         }
     } catch (e) {
-        ui.errorDisplay.textContent = `このページには接続できません: ${e.message}`;
+        ui.errorDisplay.textContent = chrome.i18n.getMessage("error_cantConnectPrefix", [e.message]);
         ui.generateBtn.disabled = true;
     }
 });
