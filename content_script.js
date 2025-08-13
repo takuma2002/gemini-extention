@@ -1,117 +1,156 @@
-// Gemini DM Assistant - content_script.js (Refactored v8 - Advanced Cleaning)
+// DM Assistant - content_script.js (Refactored v10 - Manual Selection)
 
-console.log("Gemini DM Assistant: Content script loaded and listening for popup commands.");
+console.log("DM Assistant: Content script loaded.");
 
-/**
- * Performs an advanced cleaning of the given HTML element to optimize for token count
- * while preserving essential content and structure.
- * @param {HTMLElement} element - The HTML element to clean.
- * @returns {string} The cleaned inner HTML string.
- */
+// --- HTML Cleaning Logic ---
 function getCleanedHtml(element) {
+    // (Implementation is the same as before)
     const clonedElement = element.cloneNode(true);
-
-    // --- Pass 1: Remove unwanted tags entirely ---
     const selectorsToRemove = ['script', 'style', 'svg', 'iframe', 'noscript', 'link', 'meta', 'button', 'input'];
-    selectorsToRemove.forEach(selector => {
-        clonedElement.querySelectorAll(selector).forEach(el => el.remove());
-    });
-
-    // --- Pass 2: Filter attributes, keeping only meaningful ones ---
+    selectorsToRemove.forEach(selector => clonedElement.querySelectorAll(selector).forEach(el => el.remove()));
     const allowedAttributes = ['alt', 'title', 'aria-label', 'datetime', 'href', 'src'];
     const allElements = clonedElement.querySelectorAll('*');
     allElements.forEach(el => {
         const attrsToRemove = [];
         for (const attr of el.attributes) {
-            if (!allowedAttributes.includes(attr.name.toLowerCase())) {
-                attrsToRemove.push(attr.name);
-            }
+            if (!allowedAttributes.includes(attr.name.toLowerCase())) attrsToRemove.push(attr.name);
         }
         attrsToRemove.forEach(attrName => el.removeAttribute(attrName));
     });
-
-    // --- Pass 3: Simplify redundant nested structures ---
-    // This is a complex task. A simple heuristic: unwrap divs that only contain another div.
-    // We'll run this multiple times to collapse deeply nested wrappers.
-    for (let i = 0; i < 5; i++) { // Run 5 passes to be safe
+    for (let i = 0; i < 5; i++) {
         clonedElement.querySelectorAll('div').forEach(div => {
-            // Check if it has exactly one child element which is also a div, and no text nodes.
             if (div.children.length === 1 && div.children[0].tagName === 'DIV' && !Array.from(div.childNodes).some(node => node.nodeType === 3 && node.textContent.trim() !== '')) {
-                // Replace the parent div with its child
                 div.parentNode.replaceChild(div.children[0], div);
             }
         });
     }
-
-    // --- Pass 4: Collapse whitespace ---
-    // Use the final HTML string and replace multiple whitespace characters with a single space.
-    // Also trim leading/trailing whitespace from each line.
     let finalHtml = clonedElement.innerHTML;
-    finalHtml = finalHtml.split('\n').map(line => line.trim()).join('\n');
-    finalHtml = finalHtml.replace(/\s{2,}/g, ' '); // Collapse spaces
-    finalHtml = finalHtml.replace(/>\s+</g, '><'); // Remove space between tags
-
+    finalHtml = finalHtml.split('\n').map(line => line.trim()).join('\n').replace(/\s{2,}/g, ' ').replace(/>\s+</g, '><');
     return finalHtml;
 }
 
-
-/**
- * Heuristic to find the conversation container relative to a given element.
- * @param {HTMLElement} startElement - The element to start searching from (e.g., the active input).
- * @returns {string|null} The cleaned innerHTML of the container, or null if not found.
- */
-function findConversationHtml(startElement) {
-    if (!startElement) {
-        console.error("No start element provided to find conversation.");
-        return null;
-    }
-
+// --- Site-Specific Adapters & Dispatcher ---
+function findConversationHtmlGeneric(startElement) {
+    // (Implementation is the same as before)
     let potentialContainer = startElement;
     for (let i = 0; i < 15; i++) {
         if (!potentialContainer) break;
-
         const style = window.getComputedStyle(potentialContainer);
         if ((style.overflowY === 'auto' || style.overflowY === 'scroll') && potentialContainer.clientHeight > 200) {
-            console.log("Found potential conversation container:", potentialContainer);
-            return getCleanedHtml(potentialContainer); // Use the advanced cleaner
+            return getCleanedHtml(potentialContainer);
         }
         potentialContainer = potentialContainer.parentElement;
     }
-    console.error("Could not find conversation container via heuristic.");
     return null;
 }
 
-/**
- * Inserts text into the specified input element.
- * @param {HTMLElement} inputElement - The <textarea> or contenteditable <div>.
- * @param {string} text - The text to insert.
- */
-function insertTextIntoInput(inputElement, text) {
-    if (!inputElement) {
-        console.error("No input element found to insert text.");
-        return;
+function findConversationHtmlTwitter() {
+    // (Implementation is the same as before)
+    const conversationContainer = document.querySelector('[data-testid="conversation"]');
+    if (conversationContainer) return getCleanedHtml(conversationContainer);
+    return null;
+}
+
+function getConversationHtmlForPage(activeElement) {
+    // (Implementation is the same as before)
+    const hostname = window.location.hostname;
+    let html = null;
+    if (hostname.includes('twitter.com') || hostname.includes('x.com')) {
+        html = findConversationHtmlTwitter();
     }
+    if (!html) {
+        html = findConversationHtmlGeneric(activeElement);
+    }
+    return html;
+}
+
+// --- Text Insertion Logic ---
+function insertTextIntoInput(inputElement, text) {
+    // (Implementation is the same as before)
+    if (!inputElement) return;
     if (inputElement.tagName.toLowerCase() === 'textarea') {
         inputElement.value = text;
     } else {
         inputElement.innerText = text;
     }
     inputElement.dispatchEvent(new Event('input', { bubbles: true, cancelable: true }));
-    console.log("Text inserted into:", inputElement);
 }
 
 
-// Listen for messages from the popup or other parts of the extension.
+// --- NEW: Manual Selection Mode Logic ---
+let selectionModeActive = false;
+let highlighter = null;
+
+function createHighlighter() {
+    if (highlighter) return;
+    highlighter = document.createElement('div');
+    highlighter.style.position = 'absolute';
+    highlighter.style.backgroundColor = 'rgba(42, 104, 255, 0.4)';
+    highlighter.style.border = '2px solid rgba(42, 104, 255, 0.8)';
+    highlighter.style.borderRadius = '4px';
+    highlighter.style.zIndex = '99999';
+    highlighter.style.pointerEvents = 'none'; // IMPORTANT
+    document.body.appendChild(highlighter);
+}
+
+const mouseoverHandler = (event) => {
+    const rect = event.target.getBoundingClientRect();
+    highlighter.style.left = `${rect.left + window.scrollX}px`;
+    highlighter.style.top = `${rect.top + window.scrollY}px`;
+    highlighter.style.width = `${rect.width}px`;
+    highlighter.style.height = `${rect.height}px`;
+};
+
+const clickHandler = (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+
+    const selectedElement = event.target;
+    console.log("Manual selection made:", selectedElement);
+    const html = getCleanedHtml(selectedElement);
+
+    // Save the selected HTML to session storage and notify the user.
+    chrome.storage.session.set({ 'manualSelectionHtml': html }, () => {
+        alert("会話エリアが選択されました。もう一度拡張機能アイコンをクリックして、返信を生成してください。");
+    });
+
+    // Clean up
+    exitSelectionMode();
+};
+
+function enterSelectionMode() {
+    if (selectionModeActive) return;
+    selectionModeActive = true;
+    console.log("Entering manual selection mode.");
+    createHighlighter();
+    document.addEventListener('mouseover', mouseoverHandler);
+    document.addEventListener('click', clickHandler, true); // Use capture phase
+}
+
+function exitSelectionMode() {
+    if (!selectionModeActive) return;
+    selectionModeActive = false;
+    console.log("Exiting manual selection mode.");
+    document.removeEventListener('mouseover', mouseoverHandler);
+    document.removeEventListener('click', clickHandler, true);
+    if (highlighter) {
+        highlighter.remove();
+        highlighter = null;
+    }
+}
+
+
+// --- Main Message Listener ---
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     console.log("Message received in content script:", request);
 
     if (request.type === 'getConversationHtml') {
         const activeElement = document.activeElement;
         if (activeElement && (activeElement.tagName.toLowerCase() === 'textarea' || activeElement.isContentEditable)) {
-            const html = findConversationHtml(activeElement);
+            const html = getConversationHtmlForPage(activeElement);
             sendResponse({ html: html });
         } else {
-            sendResponse({ html: null, error: "No active text input field found on the page. Please click on the message input box first." });
+            sendResponse({ html: null, error: "No active text input field found on the page." });
         }
         return true;
     }
@@ -124,6 +163,12 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         } else {
             sendResponse({ success: false, error: "No active text input found to insert the reply." });
         }
+        return true;
+    }
+
+    if (request.type === 'enterSelectionMode') {
+        enterSelectionMode();
+        sendResponse({ success: true });
         return true;
     }
 });

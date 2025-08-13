@@ -178,6 +178,12 @@
             overflow-y: auto;
             border: 1px solid #ddd;
         }
+        .footer-link {
+            text-align: center;
+            font-size: 12px;
+            color: var(--label-color);
+            margin-top: -10px;
+        }
     </style>
 </head>
 <body>
@@ -226,7 +232,7 @@
             <button id="insert-btn" style="margin-top: 10px;">ページに挿入</button>
         </div>
 
-        <div id="error-display"></div>
+        <div id="error-display" class="error-container"></div>
 
         <details id="log-details" class="hidden">
             <summary>APIログを表示</summary>
@@ -237,6 +243,8 @@
                 <pre id="log-response"></pre>
             </div>
         </details>
+
+        <a href="#" id="report-issue-link" class="footer-link">問題を報告</a>
     </div>
     <script src="popup.js"></script>
 </body>
