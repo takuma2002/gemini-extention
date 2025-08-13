@@ -117,8 +117,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     ui.generateBtn.addEventListener('click', async () => {
         // ... (same as before) ...
         ui.errorDisplay.textContent = '';
-        resultWrapper.classList.add('hidden');
-        logDetails.classList.add('hidden');
+        ui.resultWrapper.classList.add('hidden');
+        ui.logDetails.classList.add('hidden');
         ui.generateBtn.disabled = true;
         ui.generateBtn.textContent = '生成中...';
         try {
