@@ -9,7 +9,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         resultWrapper: document.getElementById('result-wrapper'),
         resultDisplay: document.getElementById('result-display'),
         insertBtn: document.getElementById('insert-btn'),
-        copyBtn: document.getElementById('copy-btn'), // New button
+        copyBtn: document.getElementById('copy-btn'),
         errorDisplay: document.getElementById('error-display'),
         logDetails: document.getElementById('log-details'),
         logRequest: document.getElementById('log-request'),
@@ -46,11 +46,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         ui.styleSelect.value = state.style || '丁寧な';
         ui.instructionsInput.value = state.instructions || '';
         document.querySelector(`input[name="last-speaker"][value="${state.lastSpeaker || '相手'}"]`).checked = true;
-
         if (state.isResultVisible) {
             ui.resultDisplay.textContent = state.resultText || '';
             ui.resultWrapper.classList.remove('hidden');
-            // Restore button visibility
             if (state.inputFieldFound) {
                 ui.insertBtn.classList.remove('hidden');
                 ui.copyBtn.classList.add('hidden');
@@ -112,16 +110,16 @@ document.addEventListener('DOMContentLoaded', async () => {
         ui.logDetails.classList.add('hidden');
         ui.generateBtn.disabled = true;
         ui.generateBtn.textContent = '生成中...';
-
         try {
             const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
             if (!tab) throw new Error("アクティブなタブが見つかりません。");
-
             const htmlResponse = await chrome.tabs.sendMessage(tab.id, { type: 'getConversationHtml' });
-
-            if (chrome.runtime.lastError || !htmlResponse) throw new Error("コンテンツスクリプトとの接続に失敗しました。ページをリロードしてください。");
-            if (htmlResponse.error || !htmlResponse.html) throw new Error(htmlResponse.error || "ページから会話コンテンツを特定できませんでした。");
-
+            if (chrome.runtime.lastError || !htmlResponse) {
+                throw new Error("コンテンツスクリプトとの接続に失敗しました。ページをリロードしてください。");
+            }
+            if (htmlResponse.error || !htmlResponse.html) {
+                throw new Error(htmlResponse.error || "ページから会話コンテンツを特定できませんでした。");
+            }
             const responseFromBg = await chrome.runtime.sendMessage({
                 type: 'generateReply',
                 html: htmlResponse.html,
@@ -129,17 +127,14 @@ document.addEventListener('DOMContentLoaded', async () => {
                 instructions: ui.instructionsInput.value,
                 lastSpeaker: document.querySelector('input[name="last-speaker"]:checked').value,
             });
-
             if (responseFromBg.log) {
                 ui.logRequest.textContent = JSON.stringify(responseFromBg.log.request, null, 2);
                 ui.logResponse.textContent = JSON.stringify(responseFromBg.log.response, null, 2);
                 ui.logDetails.classList.remove('hidden');
             }
             if (responseFromBg.error) throw new Error(responseFromBg.error.message);
-
             ui.resultDisplay.textContent = responseFromBg.reply;
             ui.resultWrapper.classList.remove('hidden');
-
             if (htmlResponse.inputFieldFound) {
                 ui.insertBtn.classList.remove('hidden');
                 ui.copyBtn.classList.add('hidden');
@@ -147,9 +142,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 ui.insertBtn.classList.add('hidden');
                 ui.copyBtn.classList.remove('hidden');
             }
-
             await saveState();
-
         } catch (error) {
             ui.errorDisplay.textContent = `エラー: ${error.message}`;
             await saveState();
@@ -172,7 +165,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             ui.errorDisplay.textContent = `挿入エラー: ${error.message}`;
         }
     });
-
     ui.copyBtn.addEventListener('click', () => {
         const textToCopy = ui.resultDisplay.textContent;
         if (!textToCopy) return;

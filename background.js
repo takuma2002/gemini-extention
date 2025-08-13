@@ -9,11 +9,7 @@
  * @returns {Array<object>} The messages array for the API request.
  */
 function createMessages(html, style, instructions, lastSpeaker) {
-    // A simple attempt to clean the HTML and reduce token count.
-    const cleanHtml = html
-        .replace(/ class="[^"]*"/g, '')
-        .replace(/ style="[^"]*"/g, '')
-        .replace(/ data-[\w-]*="[^"]*"/g, '');
+    // The HTML is already cleaned by the content script. This function now just builds the prompt.
 
     // System prompt in English for better performance and instruction following.
     const systemPrompt = `You are a professional communication assistant AI. Your task is to generate a high-quality, natural-sounding reply based on the provided conversation context and user-defined rules.
@@ -32,7 +28,7 @@ function createMessages(html, style, instructions, lastSpeaker) {
 
 ## Conversation HTML
 \`\`\`html
-${cleanHtml}
+${html}
 \`\`\`
 `;
 
@@ -49,7 +45,9 @@ ${cleanHtml}
  */
 async function handleGenerateReply(request) {
     const { html, style, instructions, lastSpeaker } = request;
-    const model = "qwen/qwen3-235b-a22b:free"; // Hardcoded model as requested
+    // Use a Gemini model as requested in the original issue.
+    // google/gemini-pro is a standard, powerful model available on OpenRouter.
+    const model = "google/gemini-pro";
     let requestBody; // To store for logging
 
     try {

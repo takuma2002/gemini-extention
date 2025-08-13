@@ -1,21 +1,34 @@
-// DM Assistant - content_script.js (Refactored v11 - Focus-Free Generation)
+// DM Assistant - content_script.js (Refactored v12 - Optimized)
 
 console.log("DM Assistant: Content script loaded.");
 
-// --- HTML Cleaning Logic ---
+// --- Optimized HTML Cleaning Logic ---
 function getCleanedHtml(element) {
     const clonedElement = element.cloneNode(true);
     const selectorsToRemove = ['script', 'style', 'svg', 'iframe', 'noscript', 'link', 'meta', 'button', 'input'];
-    selectorsToRemove.forEach(selector => clonedElement.querySelectorAll(selector).forEach(el => el.remove()));
     const allowedAttributes = ['alt', 'title', 'aria-label', 'datetime', 'href', 'src'];
+
     const allElements = clonedElement.querySelectorAll('*');
+
+    // --- Single Pass for Cleaning ---
     allElements.forEach(el => {
+        // Pass 1: Remove unwanted tags
+        if (selectorsToRemove.includes(el.tagName.toLowerCase())) {
+            el.remove();
+            return; // No need to process attributes if the element is removed
+        }
+
+        // Pass 2: Filter attributes
         const attrsToRemove = [];
         for (const attr of el.attributes) {
-            if (!allowedAttributes.includes(attr.name.toLowerCase())) attrsToRemove.push(attr.name);
+            if (!allowedAttributes.includes(attr.name.toLowerCase())) {
+                attrsToRemove.push(attr.name);
+            }
         }
         attrsToRemove.forEach(attrName => el.removeAttribute(attrName));
     });
+
+    // --- Pass 3: Simplify redundant nested structures (unchanged) ---
     for (let i = 0; i < 5; i++) {
         clonedElement.querySelectorAll('div').forEach(div => {
             if (div.children.length === 1 && div.children[0].tagName === 'DIV' && !Array.from(div.childNodes).some(node => node.nodeType === 3 && node.textContent.trim() !== '')) {
@@ -23,12 +36,15 @@ function getCleanedHtml(element) {
             }
         });
     }
+
+    // --- Pass 4: Collapse whitespace (unchanged) ---
     let finalHtml = clonedElement.innerHTML;
     finalHtml = finalHtml.split('\n').map(line => line.trim()).join('\n').replace(/\s{2,}/g, ' ').replace(/>\s+</g, '><');
+
     return finalHtml;
 }
 
-// --- Site-Specific Adapters & Dispatcher ---
+// --- Site-Specific Adapters & Dispatcher (unchanged) ---
 function findConversationHtmlGeneric() {
     let bestCandidate = null;
     let maxContentLength = -1;
@@ -44,35 +60,24 @@ function findConversationHtmlGeneric() {
             }
         } catch (e) { /* ignore elements that can't have computed styles */ }
     });
-    if (bestCandidate) {
-        console.log("Found container with generic heuristic:", bestCandidate);
-        return getCleanedHtml(bestCandidate);
-    }
+    if (bestCandidate) return getCleanedHtml(bestCandidate);
     return null;
 }
 
 function findConversationHtmlTwitter() {
     const conversationContainer = document.querySelector('[data-testid="conversation"]');
-    if (conversationContainer) {
-        console.log("Found Twitter conversation container using data-testid:", conversationContainer);
-        return getCleanedHtml(conversationContainer);
-    }
+    if (conversationContainer) return getCleanedHtml(conversationContainer);
     return null;
 }
 
 function getConversationHtmlForPage() {
     const hostname = window.location.hostname;
     let html = null;
-    console.log(`Dispatching for hostname: ${hostname}`);
     if (hostname.includes('twitter.com') || hostname.includes('x.com')) {
         html = findConversationHtmlTwitter();
     }
     if (!html) {
-        console.log("Falling back to generic adapter.");
         html = findConversationHtmlGeneric();
-    }
-    if (!html) {
-        console.error("All adapters failed to find a conversation container.");
     }
     return html;
 }

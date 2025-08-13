@@ -1,3 +1,5 @@
+// NOTE: This is a test script for development and is not part of the extension's runtime code.
+
 /**
  * A REGEX-BASED SIMULATION of the advanced HTML cleaner for testing purposes.
  * This simulates the multi-pass cleaning from content_script.js in an environment

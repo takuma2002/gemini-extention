@@ -1,3 +1,5 @@
+// NOTE: This is a test script for development and is not part of the extension's runtime code.
+
 /**
  * Creates the messages array for the OpenRouter (OpenAI-compatible) API.
  * This is a copy of the function from background.js for isolated testing.
