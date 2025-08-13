@@ -56,7 +56,7 @@ ${html}
  */
 async function handleGenerateReply(request) {
     const { html, style, instructions, lastSpeaker } = request;
-    const model = "google/gemini-pro";
+    const model = "qwen/qwen3-235b-a22b:free";
     let requestBody; // To store for logging
 
     try {
