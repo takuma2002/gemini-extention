@@ -63,5 +63,6 @@
   "error_apiEmptyResponse": { "message": "Received an unexpected or empty response from the API." },
 
   "popup_translatedReply": { "message": "Translated Reply" },
-  "popup_copyTranslationBtn": { "message": "Copy Translation" }
+  "popup_copyTranslationBtn": { "message": "Copy Translation" },
+  "manualSelection_alert": { "message": "Conversation area selected. Please click the extension icon again to generate a reply." }
 }

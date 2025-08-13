@@ -37,11 +37,16 @@ function getCleanedHtml(element) {
         });
     }
 
-    // --- Pass 4: Collapse whitespace (unchanged) ---
+    // --- Pass 4: Collapse whitespace more conservatively ---
     let finalHtml = clonedElement.innerHTML;
-    finalHtml = finalHtml.split('\n').map(line => line.trim()).join('\n').replace(/\s{2,}/g, ' ').replace(/>\s+</g, '><');
+    // Remove whitespace between tags, which is safe.
+    finalHtml = finalHtml.replace(/>\s+</g, '><');
+    // Trim each line, which is also generally safe and good for cleaning.
+    finalHtml = finalHtml.split('\n').map(line => line.trim()).join('\n');
+    // Remove fully empty lines that might result from the trim.
+    finalHtml = finalHtml.replace(/^\s*[\r\n]/gm, '');
 
-    return finalHtml;
+    return finalHtml.trim();
 }
 
 // --- Site-Specific Adapters & Dispatcher (unchanged) ---
@@ -131,7 +136,7 @@ const clickHandler = (event) => {
     const selectedElement = event.target;
     const html = getCleanedHtml(selectedElement);
     chrome.storage.session.set({ 'manualSelectionHtml': html }, () => {
-        alert("会話エリアが選択されました。もう一度拡張機能アイコンをクリックして、返信を生成してください。");
+        alert(chrome.i18n.getMessage("manualSelection_alert"));
     });
     exitSelectionMode();
 };

@@ -63,5 +63,6 @@
   "error_apiEmptyResponse": { "message": "从API收到意外或空的响应。" },
 
   "popup_translatedReply": { "message": "翻译后的回复" },
-  "popup_copyTranslationBtn": { "message": "复制译文" }
+  "popup_copyTranslationBtn": { "message": "复制译文" },
+  "manualSelection_alert": { "message": "已选择对话区域。请再次单击扩展图标以生成回复。" }
 }

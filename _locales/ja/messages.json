@@ -63,5 +63,6 @@
   "error_apiEmptyResponse": { "message": "APIから予期しない、または空の応答がありました。" },
 
   "popup_translatedReply": { "message": "翻訳された返信" },
-  "popup_copyTranslationBtn": { "message": "翻訳をコピー" }
+  "popup_copyTranslationBtn": { "message": "翻訳をコピー" },
+  "manualSelection_alert": { "message": "会話エリアが選択されました。もう一度拡張機能アイコンをクリックして、返信を生成してください。" }
 }

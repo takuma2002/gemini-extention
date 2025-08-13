@@ -32,10 +32,9 @@ function simulateAdvancedCleaning(htmlString) {
     // Pass 3 (Structure Simplification) is too complex for a reliable regex simulation.
     // The real implementation in content_script.js handles this.
 
-    // Pass 4: Collapse whitespace
-    cleaned = cleaned.split('\n').map(line => line.trim()).join('\n');
-    cleaned = cleaned.replace(/\s{2,}/g, ' ');
-    cleaned = cleaned.replace(/>\s+</g, '><');
+    // Pass 4: Collapse whitespace conservatively
+    cleaned = cleaned.replace(/>\s+</g, '><'); // Remove whitespace between tags
+    cleaned = cleaned.split('\n').map(line => line.trim()).join('\n'); // Trim each line
     cleaned = cleaned.replace(/^\s*[\r\n]/gm, ''); // remove empty lines
 
     return cleaned.trim();
@@ -49,11 +48,11 @@ const sampleHtml = `
     <div>
         <div class="message-row other-person">
             <img src="avatar.png" alt="Avatar of other person" title="User123">
-            <p class="text-bubble" data-testid="msg-1">こんにちは！お元気ですか？</p>
+            <p class="text-bubble" data-testid="msg-1">こんにちは！  お元気ですか？</p> <!-- Note: two spaces -->
         </div>
     </div>
     <div class="message-row self">
-        <p class="text-bubble" aria-label="My message content">はい、元気です。srcフォルダの件、ありがとうございます。</p>
+        <p class="text-bubble" aria-label="My message content">はい、元気です。   srcフォルダの件、ありがとうございます。</p> <!-- Note: three spaces -->
         <a href="http://example.com">A link that should be preserved</a>
     </div>
     <svg width="24" height="24"><path d="..."></path></svg>
