@@ -16,6 +16,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         logResponse: document.getElementById('log-response'),
         charCounter: document.getElementById('char-counter'),
         reportIssueLink: document.getElementById('report-issue-link'),
+        manualSelectBtn: document.getElementById('manual-select-btn'),
     };
 
     const storageKey = 'popupState';
@@ -101,6 +102,19 @@ document.addEventListener('DOMContentLoaded', async () => {
         const subject = encodeURIComponent("AI DM 返信アシスタントの問題報告");
         const body = encodeURIComponent(`\n問題が発生したページのURL: ${pageUrl}\n\n---\n問題の詳細を以下にご記入ください：\n(例：会話の読み込みがうまくいかない、返信が期待と違う、など)\n\n\n\n---\n`);
         chrome.tabs.create({ url: `mailto:support@example.com?subject=${subject}&body=${body}` });
+    });
+
+    ui.manualSelectBtn.addEventListener('click', async (event) => {
+        event.preventDefault();
+        try {
+            const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+            if (tab) {
+                await chrome.tabs.sendMessage(tab.id, { type: 'enterSelectionMode' });
+                window.close();
+            }
+        } catch (error) {
+            ui.errorDisplay.textContent = `エラー: ${error.message}`;
+        }
     });
 
     // --- Main Generate Logic ---
