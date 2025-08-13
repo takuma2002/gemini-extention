@@ -120,6 +120,12 @@
         #insert-btn:hover {
             background-color: #218838;
         }
+        #copy-btn {
+            background-color: #17a2b8; /* A nice teal for copy */
+        }
+        #copy-btn:hover:not(:disabled) {
+            background-color: #138496;
+        }
         .char-counter {
             text-align: right;
             font-size: 12px;
@@ -229,7 +235,10 @@
         <div id="result-wrapper" class="hidden">
             <label>生成された返信</label>
             <div id="result-display" class="result-container"></div>
-            <button id="insert-btn" style="margin-top: 10px;">ページに挿入</button>
+            <div class="button-group" style="margin-top: 10px;">
+                <button id="copy-btn" class="hidden">テキストをコピー</button>
+                <button id="insert-btn">ページに挿入</button>
+            </div>
         </div>
 
         <div id="error-display" class="error-container"></div>

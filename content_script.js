@@ -1,10 +1,9 @@
-// DM Assistant - content_script.js (Refactored v10 - Manual Selection)
+// DM Assistant - content_script.js (Refactored v11 - Focus-Free Generation)
 
 console.log("DM Assistant: Content script loaded.");
 
 // --- HTML Cleaning Logic ---
 function getCleanedHtml(element) {
-    // (Implementation is the same as before)
     const clonedElement = element.cloneNode(true);
     const selectorsToRemove = ['script', 'style', 'svg', 'iframe', 'noscript', 'link', 'meta', 'button', 'input'];
     selectorsToRemove.forEach(selector => clonedElement.querySelectorAll(selector).forEach(el => el.remove()));
@@ -30,43 +29,56 @@ function getCleanedHtml(element) {
 }
 
 // --- Site-Specific Adapters & Dispatcher ---
-function findConversationHtmlGeneric(startElement) {
-    // (Implementation is the same as before)
-    let potentialContainer = startElement;
-    for (let i = 0; i < 15; i++) {
-        if (!potentialContainer) break;
-        const style = window.getComputedStyle(potentialContainer);
-        if ((style.overflowY === 'auto' || style.overflowY === 'scroll') && potentialContainer.clientHeight > 200) {
-            return getCleanedHtml(potentialContainer);
-        }
-        potentialContainer = potentialContainer.parentElement;
+function findConversationHtmlGeneric() {
+    let bestCandidate = null;
+    let maxContentLength = -1;
+    document.querySelectorAll('div, main, section').forEach(el => {
+        try {
+            const style = window.getComputedStyle(el);
+            if ((style.overflowY === 'auto' || style.overflowY === 'scroll') && el.clientHeight > 200) {
+                const textLength = el.textContent.length;
+                if (textLength > maxContentLength) {
+                    maxContentLength = textLength;
+                    bestCandidate = el;
+                }
+            }
+        } catch (e) { /* ignore elements that can't have computed styles */ }
+    });
+    if (bestCandidate) {
+        console.log("Found container with generic heuristic:", bestCandidate);
+        return getCleanedHtml(bestCandidate);
     }
     return null;
 }
 
 function findConversationHtmlTwitter() {
-    // (Implementation is the same as before)
     const conversationContainer = document.querySelector('[data-testid="conversation"]');
-    if (conversationContainer) return getCleanedHtml(conversationContainer);
+    if (conversationContainer) {
+        console.log("Found Twitter conversation container using data-testid:", conversationContainer);
+        return getCleanedHtml(conversationContainer);
+    }
     return null;
 }
 
-function getConversationHtmlForPage(activeElement) {
-    // (Implementation is the same as before)
+function getConversationHtmlForPage() {
     const hostname = window.location.hostname;
     let html = null;
+    console.log(`Dispatching for hostname: ${hostname}`);
     if (hostname.includes('twitter.com') || hostname.includes('x.com')) {
         html = findConversationHtmlTwitter();
     }
     if (!html) {
-        html = findConversationHtmlGeneric(activeElement);
+        console.log("Falling back to generic adapter.");
+        html = findConversationHtmlGeneric();
+    }
+    if (!html) {
+        console.error("All adapters failed to find a conversation container.");
     }
     return html;
 }
 
-// --- Text Insertion Logic ---
+// --- Text Insertion & State Checking ---
 function insertTextIntoInput(inputElement, text) {
-    // (Implementation is the same as before)
     if (!inputElement) return;
     if (inputElement.tagName.toLowerCase() === 'textarea') {
         inputElement.value = text;
@@ -76,8 +88,15 @@ function insertTextIntoInput(inputElement, text) {
     inputElement.dispatchEvent(new Event('input', { bubbles: true, cancelable: true }));
 }
 
+function getActiveInputField() {
+    const activeElement = document.activeElement;
+    if (activeElement && (activeElement.tagName.toLowerCase() === 'textarea' || activeElement.isContentEditable)) {
+        return activeElement;
+    }
+    return null;
+}
 
-// --- NEW: Manual Selection Mode Logic ---
+// --- Manual Selection Mode Logic ---
 let selectionModeActive = false;
 let highlighter = null;
 
@@ -89,7 +108,7 @@ function createHighlighter() {
     highlighter.style.border = '2px solid rgba(42, 104, 255, 0.8)';
     highlighter.style.borderRadius = '4px';
     highlighter.style.zIndex = '99999';
-    highlighter.style.pointerEvents = 'none'; // IMPORTANT
+    highlighter.style.pointerEvents = 'none';
     document.body.appendChild(highlighter);
 }
 
@@ -104,33 +123,25 @@ const mouseoverHandler = (event) => {
 const clickHandler = (event) => {
     event.preventDefault();
     event.stopPropagation();
-
     const selectedElement = event.target;
-    console.log("Manual selection made:", selectedElement);
     const html = getCleanedHtml(selectedElement);
-
-    // Save the selected HTML to session storage and notify the user.
     chrome.storage.session.set({ 'manualSelectionHtml': html }, () => {
         alert("会話エリアが選択されました。もう一度拡張機能アイコンをクリックして、返信を生成してください。");
     });
-
-    // Clean up
     exitSelectionMode();
 };
 
 function enterSelectionMode() {
     if (selectionModeActive) return;
     selectionModeActive = true;
-    console.log("Entering manual selection mode.");
     createHighlighter();
     document.addEventListener('mouseover', mouseoverHandler);
-    document.addEventListener('click', clickHandler, true); // Use capture phase
+    document.addEventListener('click', clickHandler, true);
 }
 
 function exitSelectionMode() {
     if (!selectionModeActive) return;
     selectionModeActive = false;
-    console.log("Exiting manual selection mode.");
     document.removeEventListener('mouseover', mouseoverHandler);
     document.removeEventListener('click', clickHandler, true);
     if (highlighter) {
@@ -139,26 +150,19 @@ function exitSelectionMode() {
     }
 }
 
-
 // --- Main Message Listener ---
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-    console.log("Message received in content script:", request);
-
     if (request.type === 'getConversationHtml') {
-        const activeElement = document.activeElement;
-        if (activeElement && (activeElement.tagName.toLowerCase() === 'textarea' || activeElement.isContentEditable)) {
-            const html = getConversationHtmlForPage(activeElement);
-            sendResponse({ html: html });
-        } else {
-            sendResponse({ html: null, error: "No active text input field found on the page." });
-        }
+        const html = getConversationHtmlForPage();
+        const inputField = getActiveInputField();
+        sendResponse({ html: html, inputFieldFound: !!inputField });
         return true;
     }
 
     if (request.type === 'insertText') {
-        const activeElement = document.activeElement;
-        if (activeElement && (activeElement.tagName.toLowerCase() === 'textarea' || activeElement.isContentEditable)) {
-            insertTextIntoInput(activeElement, request.text);
+        const inputField = getActiveInputField();
+        if (inputField) {
+            insertTextIntoInput(inputField, request.text);
             sendResponse({ success: true });
         } else {
             sendResponse({ success: false, error: "No active text input found to insert the reply." });
