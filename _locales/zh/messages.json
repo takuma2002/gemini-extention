@@ -1,13 +1,6 @@
 {
-  "extensionName": {
-    "message": "AI DM 回复助手",
-    "description": "The name of the extension."
-  },
-  "extensionDescription": {
-    "message": "从DM对话历史中读取上下文，并使用AI生成回复草稿。",
-    "description": "The description of the extension."
-  },
-
+  "extensionName": { "message": "AI DM 回复助手" },
+  "extensionDescription": { "message": "从DM对话历史中读取上下文，并使用AI生成回复草稿。" },
   "popup_pageTitle": { "message": "AI DM 回复助手" },
   "popupTitle": { "message": "AI 回复助手" },
   "settings_open": { "message": "打开设置" },
@@ -32,7 +25,6 @@
   "log_apiResponse": { "message": "API响应:" },
   "popup_manualSelect": { "message": "手动选择" },
   "popup_reportIssue": { "message": "报告问题" },
-
   "options_pageTitle": { "message": "AI DM 回复助手 设置" },
   "options_title": { "message": "DM 回复助手 设置" },
   "options_description": { "message": "请输入您从 OpenRouter 获取的 API 密钥。<br>您输入的密钥仅保存在您浏览器的安全区域中。" },
@@ -44,7 +36,6 @@
   "options_lang_en": { "message": "英语" },
   "options_lang_zh": { "message": "中文" },
   "options_displayLanguageNote": { "message": "注意：回复文本是根据对话的语言生成的。" },
-
   "popup_generateBtn_generating": { "message": "生成中..." },
   "popup_copyBtn_copied": { "message": "已复制！" },
   "report_subject": { "message": "AI DM 回复助手的问题报告" },
@@ -61,7 +52,6 @@
   "error_apiKeyMissing": { "message": "未设置OpenRouter API密钥。请在选项页面中设置。" },
   "error_apiFail": { "message": "API请求失败: $STATUS$", "placeholders": { "status": { "content": "$1" } } },
   "error_apiEmptyResponse": { "message": "从API收到意外或空的响应。" },
-
   "popup_translatedReply": { "message": "翻译后的回复" },
   "popup_copyTranslationBtn": { "message": "复制译文" },
   "manualSelection_alert": { "message": "已选择对话区域。请再次单击扩展图标以生成回复。" }

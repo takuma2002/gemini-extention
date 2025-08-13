@@ -7,7 +7,6 @@
     "message": "DMの会話履歴から文脈を読み取り、AIを用いて返信案を生成します。",
     "description": "The description of the extension."
   },
-
   "popup_pageTitle": { "message": "AI DM 返信アシスタント" },
   "popupTitle": { "message": "AI 返信アシスタント" },
   "settings_open": { "message": "設定を開く" },
@@ -32,7 +31,6 @@
   "log_apiResponse": { "message": "API Response:" },
   "popup_manualSelect": { "message": "手動で選択" },
   "popup_reportIssue": { "message": "問題を報告" },
-
   "options_pageTitle": { "message": "AI DM 返信アシスタント 設定" },
   "options_title": { "message": "DM 返信アシスタント 設定" },
   "options_description": { "message": "OpenRouterから取得したAPIキーを入力してください。<br>入力されたキーはお使いのブラウザの安全な領域にのみ保存されます。" },
@@ -44,7 +42,6 @@
   "options_lang_en": { "message": "英語" },
   "options_lang_zh": { "message": "中国語" },
   "options_displayLanguageNote": { "message": "注: 返信文は会話の言語に基づいて生成されます。" },
-
   "popup_generateBtn_generating": { "message": "生成中..." },
   "popup_copyBtn_copied": { "message": "コピーしました！" },
   "report_subject": { "message": "AI DM 返信アシスタントの問題報告" },
@@ -61,7 +58,6 @@
   "error_apiKeyMissing": { "message": "OpenRouter APIキーが設定されていません。オプションページで設定してください。" },
   "error_apiFail": { "message": "APIリクエストに失敗しました: $STATUS$", "placeholders": { "status": { "content": "$1" } } },
   "error_apiEmptyResponse": { "message": "APIから予期しない、または空の応答がありました。" },
-
   "popup_translatedReply": { "message": "翻訳された返信" },
   "popup_copyTranslationBtn": { "message": "翻訳をコピー" },
   "manualSelection_alert": { "message": "会話エリアが選択されました。もう一度拡張機能アイコンをクリックして、返信を生成してください。" }

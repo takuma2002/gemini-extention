@@ -1,13 +1,6 @@
 {
-  "extensionName": {
-    "message": "AI DM Reply Assistant",
-    "description": "The name of the extension."
-  },
-  "extensionDescription": {
-    "message": "Reads the context from DM conversation history and uses AI to generate reply drafts.",
-    "description": "The description of the extension."
-  },
-
+  "extensionName": { "message": "AI DM Reply Assistant" },
+  "extensionDescription": { "message": "Reads the context from DM conversation history and uses AI to generate reply drafts." },
   "popup_pageTitle": { "message": "AI DM Reply Assistant" },
   "popupTitle": { "message": "AI Reply Assistant" },
   "settings_open": { "message": "Open Settings" },
@@ -32,7 +25,6 @@
   "log_apiResponse": { "message": "API Response:" },
   "popup_manualSelect": { "message": "Select Manually" },
   "popup_reportIssue": { "message": "Report an Issue" },
-
   "options_pageTitle": { "message": "AI DM Reply Assistant Settings" },
   "options_title": { "message": "DM Reply Assistant Settings" },
   "options_description": { "message": "Please enter your API key from OpenRouter.<br>The key you enter is saved only in a secure area of your browser." },
@@ -44,7 +36,6 @@
   "options_lang_en": { "message": "English" },
   "options_lang_zh": { "message": "Chinese" },
   "options_displayLanguageNote": { "message": "Note: The reply text is generated based on the conversation's language." },
-
   "popup_generateBtn_generating": { "message": "Generating..." },
   "popup_copyBtn_copied": { "message": "Copied!" },
   "report_subject": { "message": "Issue Report for AI DM Reply Assistant" },
@@ -61,7 +52,6 @@
   "error_apiKeyMissing": { "message": "OpenRouter API key is not set. Please set it on the options page." },
   "error_apiFail": { "message": "API request failed: $STATUS$", "placeholders": { "status": { "content": "$1" } } },
   "error_apiEmptyResponse": { "message": "Received an unexpected or empty response from the API." },
-
   "popup_translatedReply": { "message": "Translated Reply" },
   "popup_copyTranslationBtn": { "message": "Copy Translation" },
   "manualSelection_alert": { "message": "Conversation area selected. Please click the extension icon again to generate a reply." }
