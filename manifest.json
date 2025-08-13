@@ -1,9 +1,8 @@
 {
   "manifest_version": 3,
-  "default_locale": "ja",
-  "name": "__MSG_extensionName__",
+  "name": "AI DM 返信アシスタント",
   "version": "1.0",
-  "description": "__MSG_extensionDescription__",
+  "description": "DMの会話履歴から文脈を読み取り、AIを用いて返信案を生成します。",
   "permissions": [
     "storage",
     "activeTab",

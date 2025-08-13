@@ -136,7 +136,7 @@ const clickHandler = (event) => {
     const selectedElement = event.target;
     const html = getCleanedHtml(selectedElement);
     chrome.storage.session.set({ 'manualSelectionHtml': html }, () => {
-        alert(chrome.i18n.getMessage("manualSelection_alert"));
+        alert("会話エリアが選択されました。もう一度拡張機能アイコンをクリックして、返信を生成してください。");
     });
     exitSelectionMode();
 };

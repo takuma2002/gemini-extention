@@ -6,23 +6,20 @@
 function saveOptions() {
     const apiKeyInput = document.getElementById('api-key');
     const apiKey = apiKeyInput.value;
-    const displayLanguage = document.getElementById('display-language').value;
     const status = document.getElementById('status');
 
-    // API Key is still mandatory
     if (!apiKey) {
-        status.textContent = chrome.i18n.getMessage("options_status_apiKeyMissing");
+        status.textContent = 'APIキーが入力されていません。';
         status.style.color = '#dc3545'; // Red for error
         setTimeout(() => { status.textContent = ''; }, 2000);
         return;
     }
 
     chrome.storage.local.set({
-        apiKey: apiKey,
-        displayLanguage: displayLanguage
+        apiKey: apiKey
     }, () => {
         // Update status to let user know options were saved.
-        status.textContent = chrome.i18n.getMessage("options_status_apiKeySaved");
+        status.textContent = 'APIキーを保存しました。';
         status.style.color = '#28a745'; // Green for success
         setTimeout(() => {
             status.textContent = '';
@@ -35,13 +32,9 @@ function saveOptions() {
  * stored in chrome.storage.
  */
 function restoreOptions() {
-    // Use default values if the keys aren't found.
-    chrome.storage.local.get({
-        apiKey: '',
-        displayLanguage: 'auto' // Default to 'auto'
-    }, (items) => {
+    // Use a default value of '' if the key isn't found.
+    chrome.storage.local.get({ apiKey: '' }, (items) => {
         document.getElementById('api-key').value = items.apiKey;
-        document.getElementById('display-language').value = items.displayLanguage;
     });
 }
 
